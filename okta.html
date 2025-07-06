@@ -97,6 +97,11 @@
                     <a href="#recommendations" class="font-medium text-slate-600 hover:text-teal-600 transition">Recommendations</a>
                 </nav>
             </div>
+            <div class="flex items-center space-x-2 py-2">
+                <input type="password" id="apiKeyInput" placeholder="Enter Gemini API Key" class="flex-grow px-3 py-1.5 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                <button id="setApiKeyBtn" class="px-4 py-1.5 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition">Set API Key</button>
+                <span id="apiKeyStatus" class="text-sm text-gray-600"></span>
+            </div>
         </div>
     </header>
 
@@ -131,10 +136,12 @@
     </main>
 
     <footer class="text-center py-8 text-slate-500">
-        <p> Designed to help you succeed.</p>
+        <p>&copy; 2025 Interactive Prep Hub. Designed to help you succeed. Made with ❤️ by Gemini not me</p>
     </footer>
 
     <script>
+        let userApiKey = ""; // This will store the user-provided API key
+
         const appData = {
             timeline: [
                 { stage: "Online Application", details: "Submit a tailored CV highlighting cloud software experience, problem-solving skills, and an innovative mindset. This is your first impression." },
@@ -239,7 +246,11 @@
 
         // Function to call Gemini API
         async function callGemini(prompt) {
-            const apiKey = ""; // Leave as empty string for Canvas environment
+            const apiKey = userApiKey; // Use the user-provided API key
+            if (!apiKey) {
+                alert("Please set your Gemini API Key in the header to use this feature.");
+                return 'Error: Gemini API Key not set.';
+            }
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
             
             let chatHistory = [];
@@ -264,7 +275,7 @@
                 }
             } catch (error) {
                 console.error('Error calling Gemini API:', error);
-                return 'Error: Failed to connect to Gemini API.';
+                return 'Error: Failed to connect to Gemini API. Check your API key and network connection.';
             }
         }
 
@@ -273,6 +284,37 @@
             const tabsContainer = document.getElementById('tabs');
             const tabContentContainer = document.getElementById('tabContent');
             const recommendationsList = document.getElementById('recommendationsList');
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            const setApiKeyBtn = document.getElementById('setApiKeyBtn');
+            const apiKeyStatus = document.getElementById('apiKeyStatus');
+
+            // Load API key from localStorage if it exists
+            const storedApiKey = localStorage.getItem('geminiApiKey');
+            if (storedApiKey) {
+                userApiKey = storedApiKey;
+                apiKeyInput.value = storedApiKey;
+                apiKeyStatus.textContent = 'API Key Loaded!';
+                apiKeyStatus.style.color = '#0d9488'; // Teal-700
+            } else {
+                apiKeyStatus.textContent = 'API Key Not Set';
+                apiKeyStatus.style.color = '#dc2626'; // Red-600
+            }
+
+            setApiKeyBtn.addEventListener('click', () => {
+                const key = apiKeyInput.value.trim();
+                if (key) {
+                    userApiKey = key;
+                    localStorage.setItem('geminiApiKey', key);
+                    apiKeyStatus.textContent = 'API Key Set!';
+                    apiKeyStatus.style.color = '#0d9488'; // Teal-700
+                } else {
+                    userApiKey = "";
+                    localStorage.removeItem('geminiApiKey');
+                    apiKeyStatus.textContent = 'API Key Cleared!';
+                    apiKeyStatus.style.color = '#dc2626'; // Red-600
+                }
+            });
+
             let activeTab = 'dsa';
             let activeDsaFilter = 'All';
             let activeSysDesignFilter = 'All';
