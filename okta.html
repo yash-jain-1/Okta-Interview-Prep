@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Okta New Grad Interview Prep Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutral Harmony -->
+    <!-- Application Structure Plan: The application is designed as an interactive dashboard, departing from the linear report structure. The goal is to create a task-oriented experience where users can actively prepare rather than passively read. The structure includes: 1) An interactive "Interview Roadmap" to visualize the process. 2) A tab-based "Core Challenge Areas" section to let users dive into specific topics (OA, DSA, System Design, IAM, Behavioral) on demand. 3) Interactive elements like filterable question banks and charts. This modular, non-linear structure is chosen for usability, allowing candidates to focus on their weakest areas and use the app as a recurring study tool, which is more effective than navigating a long document. -->
+    <!-- Visualization & Content Choices: 
+        - Interview Process -> Goal: Organize -> Viz: Interactive HTML/CSS Timeline -> Interaction: Click to expand details -> Justification: More engaging and scannable than a text list.
+        - DSA Topic Priority -> Goal: Compare/Inform -> Viz: Chart.js Polar Area Chart -> Interaction: Hover for tooltips -> Justification: Provides a quick visual hierarchy of what topics are most important, which is more impactful than a simple list.
+        - All Sample Questions (DSA, System Design, IAM) -> Goal: Organize/Practice -> Viz: Filterable HTML Cards -> Interaction: JS-powered buttons to filter content by category -> Justification: The report contains large, dense tables of questions. Filtering is essential to make this content manageable and allow users to target their practice sessions effectively.
+        - IAM Concepts -> Goal: Inform -> Viz: HTML Accordion -> Interaction: JS-powered toggle to show/hide definitions -> Justification: Reduces initial cognitive load by presenting concepts in a collapsed view, encouraging focused exploration.
+        - Library/Method: Vanilla JS for all logic, Chart.js for data visualization. This adheres to the no-SVG/Mermaid constraint. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8; /* Warm off-white */
+        }
+        .tab-active {
+            background-color: #0d9488; /* Teal-700 */
+            color: #f0fdfa; /* Teal-50 */
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .tab-inactive {
+            background-color: #f1f5f9; /* Slate-100 */
+            color: #334155; /* Slate-700 */
+        }
+        .filter-btn-active {
+            background-color: #14b8a6; /* Teal-500 */
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .filter-btn-inactive {
+            background-color: #e2e8f0; /* Slate-200 */
+            color: #475569; /* Slate-600 */
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 350px;
+            width: 100%;
+            max-width: 450px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 1.25rem;
+            top: 1.25rem;
+            bottom: -1.25rem;
+            width: 2px;
+            background-color: #cbd5e1; /* Slate-300 */
+            transform: translateX(-50%);
+        }
+        .timeline-item:last-child::before {
+            display: none;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: 1.25rem;
+            top: 1.25rem;
+            height: 1rem;
+            width: 1rem;
+            border-radius: 9999px;
+            background-color: white;
+            border: 2px solid #0d9488; /* Teal-700 */
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+        .llm-output {
+            background-color: #e0f2f7; /* Light blue-gray for LLM output */
+            border-left: 4px solid #00bcd4; /* Cyan border */
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 0.5rem;
+            color: #263238; /* Darker text */
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <h1 class="text-2xl font-bold text-teal-800">Okta Interview Prep Hub</h1>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="#roadmap" class="font-medium text-slate-600 hover:text-teal-600 transition">Roadmap</a>
+                    <a href="#challenges" class="font-medium text-slate-600 hover:text-teal-600 transition">Challenges</a>
+                    <a href="#recommendations" class="font-medium text-slate-600 hover:text-teal-600 transition">Recommendations</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        
+        <section id="intro" class="text-center mb-16">
+            <h2 class="text-4xl font-extrabold text-slate-900 mb-4">Your Interactive Guide to Acing the Okta Interview</h2>
+            <p class="max-w-3xl mx-auto text-lg text-slate-600">This hub transforms the official interview guide into a dynamic, actionable preparation tool. Navigate the interview roadmap, tackle curated question banks, and focus your efforts on what truly matters to land your new grad role at Okta.</p>
+        </section>
+
+        <section id="roadmap" class="mb-20">
+            <h3 class="text-3xl font-bold text-center text-slate-800 mb-2">The Interview Roadmap</h3>
+            <p class="text-center text-slate-500 mb-12 max-w-2xl mx-auto">Visualize your journey from application to offer. Each stage is a step forward, designed to assess your skills, problem-solving abilities, and cultural fit. Click on any stage to see what to expect.</p>
+            <div id="timelineContainer" class="space-y-8"></div>
+        </section>
+
+        <section id="challenges" class="mb-20">
+            <h3 class="text-3xl font-bold text-center text-slate-800 mb-12">Core Challenge Areas</h3>
+            <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-200">
+                <div id="tabs" class="flex flex-wrap justify-center gap-2 mb-8"></div>
+                <div id="tabContent"></div>
+            </div>
+        </section>
+        
+        <section id="recommendations" class="bg-teal-50/50 p-8 rounded-2xl border border-teal-200">
+            <h3 class="text-3xl font-bold text-center text-slate-800 mb-8">Final Recommendations Checklist</h3>
+            <p class="text-center text-slate-500 mb-10 max-w-2xl mx-auto">Success is about targeted preparation. Use this checklist to ensure you've covered all the critical areas before your interview.</p>
+            <ul id="recommendationsList" class="grid md:grid-cols-2 gap-x-8 gap-y-4 max-w-4xl mx-auto">
+            </ul>
+        </section>
+
+    </main>
+
+    <footer class="text-center py-8 text-slate-500">
+        <p>&copy; 2024 Interactive Prep Hub. Designed to help you succeed.</p>
+    </footer>
+
+    <script>
+        const appData = {
+            timeline: [
+                { stage: "Online Application", details: "Submit a tailored CV highlighting cloud software experience, problem-solving skills, and an innovative mindset. This is your first impression." },
+                { stage: "Recruiter/Hiring Manager Call", details: "A 30-minute preliminary call to verify details, discuss your experience, and assess mutual fit. Be ready for basic behavioral questions." },
+                { stage: "Online Assessment (OA)", details: "A critical filtering stage on a platform like CoderPad. Expect medium-level DSA questions under time pressure (e.g., 70 mins for 4 questions)." },
+                { stage: "Technical Virtual Interviews", details: "One or more 1-hour virtual rounds focusing on DSA, system design, and problem-solving. You'll code in a shared editor and explain your thought process." },
+                { stage: "Onsite Interview Loop (Final)", details: "The final stage, often a concentrated 4-hour session with multiple technical and behavioral interviews. The difficulty may increase to medium/hard." },
+                { stage: "Offer!", details: "Congratulations! The result of your dedicated preparation and strong performance throughout the process." }
+            ],
+            challenges: {
+                oa: {
+                    title: "Online Assessment (OA)",
+                    intro: "The OA is your first major technical hurdle. It's designed to test your coding fundamentals and problem-solving speed. Questions are typically medium-difficulty and focus on core Data Structures and Algorithms. Familiarity with online IDEs like CoderPad is key.",
+                    questions: [
+                        { title: "Medium-level graph question", concepts: "Graphs, Graph Traversal (BFS/DFS)" },
+                        { title: "Next Hotter Temperature", concepts: "Stack" },
+                        { title: "Minimum Stack", concepts: "Stack, O(1) operations" },
+                        { title: "Binary Search + Rolling Hash", concepts: "Binary Search, Hashing" },
+                        { title: "IP Address Validation", concepts: "String Manipulation, Parsing" },
+                        { title: "Detecting DDoS Attacks from Log Files", concepts: "String Parsing, Hash Map, Time-based windowing" },
+                    ]
+                },
+                dsa: {
+                    title: "Data Structures & Algorithms",
+                    intro: "DSA is the bedrock of Okta's technical interviews. You'll face medium-to-hard problems where efficiency and clear communication of your thought process are just as important as the correct answer. The chart below visualizes high-priority topics to guide your study.",
+                    priorityData: {
+                        labels: ['Arrays & Strings', 'Trees & Graphs', 'Sorting & Searching', 'Hash Tables', 'Stacks & Queues', 'Linked Lists', 'Dynamic Programming'],
+                        data: [10, 9, 8, 7, 7, 6, 5],
+                    },
+                    questions: [
+                        { category: "Array", title: "Find the median in a list with >50% same integer", complexity: "O(1) time/space" },
+                        { category: "Array", title: "Find duplicate elements in an array", complexity: "Efficient solution", links: { geeksforgeeks: "https://www.geeksforgeeks.org/find-duplicates-in-on-time-and-o1-extra-space/" } },
+                        { category: "Array", title: "Find missing number in 0-n array", complexity: "O(n)", links: { leetcode: "https://leetcode.com/problems/missing-number/", geeksforgeeks: "https://www.geeksforgeeks.org/find-the-missing-number/" } },
+                        { category: "Array", title: "Rotate Array", complexity: "In-place", links: { leetcode: "https://leetcode.com/problems/rotate-array/", geeksforgeeks: "https://www.geeksforgeeks.org/array-rotation/" } },
+                        { category: "String", title: "Validate IP Address (w.x.y.z:port)", complexity: "Not specified", links: { leetcode: "https://leetcode.com/problems/validate-ip-address/", geeksforgeeks: "https://www.geeksforgeeks.org/program-to-validate-an-ip-address/" } },
+                        { category: "String", title: "Abbreviate full names", complexity: "Not specified" },
+                        { category: "String", title: "Pattern Matching (Regex)", complexity: "Not specified", links: { geeksforgeeks: "https://www.geeksforgeeks.org/pattern-matching-in-java-using-regex/" } },
+                        { category: "Search", title: "Search in Rotated Sorted Array", complexity: "O(log n)", links: { leetcode: "https://leetcode.com/problems/search-in-rotated-sorted-array/", geeksforgeeks: "https://www.geeksforgeeks.org/search-an-element-in-a-sorted-and-pivoted-array/" } },
+                        { category: "Search", title: "Kth Largest Element in an Array", complexity: "Not specified", links: { leetcode: "https://leetcode.com/problems/kth-largest-element-in-an-array/", geeksforgeeks: "https://www.geeksforgeeks.org/kth-largest-element-in-an-array/" } },
+                        { category: "Stack", title: "Minimum Stack", complexity: "O(1) operations", links: { leetcode: "https://leetcode.com/problems/min-stack/", geeksforgeeks: "https://www.geeksforgeeks.org/design-a-stack-that-supports-getmin-in-o1-time-and-o1-extra-space/" } },
+                        { category: "Graph", title: "Lowest Common Ancestor of a Binary Tree", complexity: "Not specified", links: { leetcode: "https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/", geeksforgeeks: "https://www.geeksforgeeks.org/lowest-common-ancestor-binary-tree-set-1/" } },
+                        { category: "Graph", title: "Number of Connected Components", complexity: "Not specified", links: { leetcode: "https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/", geeksforgeeks: "https://www.geeksforgeeks.org/connected-components-in-an-undirected-graph/" } },
+                        { category: "DP", title: "Maximum Subarray (Sliding Window)", complexity: "Not specified", links: { leetcode: "https://leetcode.com/problems/maximum-subarray/", geeksforgeeks: "https://www.geeksforgeeks.org/largest-sum-contiguous-subarray/" } },
+                        { category: "SQL", title: "2nd Highest Salary in Department", complexity: "SQL Query", links: { leetcode: "https://leetcode.com/problems/second-highest-salary/", geeksforgeeks: "https://www.geeksforgeeks.org/sql-query-to-find-second-highest-salary/" } },
+                        { category: "SQL", title: "Join tables to list actors and their movies", complexity: "SQL Query", links: { geeksforgeeks: "https://www.geeksforgeeks.org/sql-join-set-1-inner-left-right-and-full-joins/" } },
+                        { category: "SQL", title: "Find users with highest activity in timeframe", complexity: "SQL Query" },
+                    ]
+                },
+                systemDesign: {
+                    title: "System Design",
+                    intro: "Even for new grads, system design questions are crucial for testing your ability to think about scalable, robust systems. The focus is on your thought process, understanding of trade-offs, and knowledge of core concepts, not on having built massive systems before. Frame your answers around Okta's domain: security, identity, and large-scale data.",
+                    questions: [
+                        { category: "Okta-Specific", title: "Design an Authentication Service", concepts: "OAuth 2.0, OIDC" },
+                        { category: "Okta-Specific", title: "Design a Rate Limiter", concepts: "Throttling, service stability" },
+                        { category: "Okta-Specific", title: "Design a DDoS Detection System", concepts: "Log analysis, real-time processing" },
+                        { category: "Okta-Specific", title: "Design Data Partitioning for Logs", concepts: "Scalability, fast querying" },
+                        { category: "General", title: "Design a URL-Shortening Service", concepts: "Unique ID generation, redirection" },
+                        { category: "General", title: "Design a Social Media App", concepts: "Feeds, content storage, real-time updates" },
+                        { category: "General", title: "Design a Web Cache", concepts: "Caching strategies, eviction policies" },
+                        { category: "General", title: "Design a Messaging App", concepts: "Real-time communication, scalability" },
+                    ]
+                },
+                iam: {
+                    title: "IAM & Okta Knowledge",
+                    intro: "Domain knowledge is a key differentiator at Okta. Understanding their products and the broader Identity & Access Management (IAM) landscape shows genuine interest and alignment. Review these core concepts and be ready to discuss their practical applications.",
+                    questions: [
+                        { category: "Protocols", title: "Explain OAuth 2.0 framework", concepts: "Secure access delegation", links: { okta_docs: "https://developer.okta.com/docs/guides/implement-oauth-for-okta/", oauth_spec: "https://oauth.net/2/" } },
+                        { category: "Protocols", title: "Differences between SAML and OIDC", concepts: "SSO, authentication", links: { okta_blog: "https://www.okta.com/blog/2017/03/saml-vs-oidc-vs-oauth/", geeksforgeeks: "https://www.geeksforgeeks.org/difference-between-saml-and-openid-connect/" } },
+                        { category: "Products", title: "What is the purpose of MFA?", concepts: "Multi-Factor Authentication", links: { okta_docs: "https://www.okta.com/products/multi-factor-authentication/" } },
+                        { category: "Products", title: "How does Okta handle User Lifecycle Management?", concepts: "Provisioning, deprovisioning", links: { okta_docs: "https://www.okta.com/products/lifecycle-management/" } },
+                        { category: "Products", title: "What are the advantages of the Okta Universal Directory?", concepts: "Centralized user management", links: { okta_docs: "https://www.okta.com/products/universal-directory/" } },
+                        { category: "Concepts", title: "What is Single Sign-On (SSO)?", concepts: "Access multiple apps with one credential", links: { okta_docs: "https://www.okta.com/products/single-sign-on/" } },
+                        { category: "Concepts", title: "What is the IAM lifecycle?", concepts: "Provisioning to Deprovisioning", links: { geeksforgeeks: "https://www.geeksforgeeks.org/identity-and-access-management-iam-lifecycle/" } },
+                        { category: "Security", title: "How do system logs help identify risks?", concepts: "Threat detection, analysis" },
+                    ]
+                },
+                behavioral: {
+                    title: "Behavioral Questions",
+                    intro: "Behavioral questions assess your soft skills, cultural fit, and problem-solving approach. Use the STAR method (Situation, Task, Action, Result) to structure your answers with clear, impactful stories from your experience.",
+                    questions: [
+                        "Tell me about a time you failed badly and what you learned from it.",
+                        "Tell me about a project you are most proud of.",
+                        "How would you deal with an unhappy customer or stakeholder?",
+                        "Tell me about a time you had to handle conflicting priorities.",
+                        "Describe a time you stepped outside your normal responsibilities to help a colleague.",
+                        "What made you decide to apply to Okta?",
+                        "How do you approach learning a new technology or complex system?"
+                    ]
+                }
+            },
+            recommendations: [
+                { title: "Master DSA", details: "Prioritize medium-level problems on arrays, strings, trees, and graphs. Focus on optimal time/space complexity." },
+                { title: "Practice Practical Coding", details: "Go beyond algorithms. Work on log parsing, data validation, and basic statistical calculations." },
+                { title: "Strengthen SQL Skills", details: "Be ready for queries involving joins, aggregation, and data analysis." },
+                { title: "Develop System Design Fundamentals", details: "Focus on concepts like scaling, caching, and load balancing, especially within an identity/security context." },
+                { title: "Acquire IAM Domain Knowledge", details: "Study Okta's products (SSO, MFA) and core protocols (OAuth, SAML, OIDC). This is a critical differentiator." },
+                { title: "Refine Communication", details: "Practice articulating your thought process aloud. Explain trade-offs and ask clarifying questions." },
+                { title: "Prepare Behavioral Stories", details: "Develop examples using the STAR method for teamwork, problem-solving, and initiative." },
+                { title: "Familiarize with Online IDEs", details: "Practice on platforms like CoderPad to get comfortable with the interview environment." },
+            ]
+        };
+
+        // Function to call Gemini API
+        async function callGemini(prompt) {
+            const apiKey = ""; // Leave as empty string for Canvas environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+            const payload = { contents: chatHistory };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    console.error('Gemini API returned unexpected structure:', result);
+                    return 'Error: Could not get a response from Gemini API.';
+                }
+            } catch (error) {
+                console.error('Error calling Gemini API:', error);
+                return 'Error: Failed to connect to Gemini API.';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const timelineContainer = document.getElementById('timelineContainer');
+            const tabsContainer = document.getElementById('tabs');
+            const tabContentContainer = document.getElementById('tabContent');
+            const recommendationsList = document.getElementById('recommendationsList');
+            let activeTab = 'dsa';
+            let activeDsaFilter = 'All';
+            let activeSysDesignFilter = 'All';
+            let activeIamFilter = 'All';
+
+            function renderTimeline() {
+                timelineContainer.innerHTML = appData.timeline.map((item, index) => `
+                    <div class="relative pl-10 timeline-item cursor-pointer" onclick="this.querySelector('p').classList.toggle('hidden')">
+                        <div class="timeline-dot"></div>
+                        <div class="pt-1">
+                            <h4 class="text-xl font-semibold text-slate-800">${index + 1}. ${item.stage}</h4>
+                            <p class="mt-2 text-slate-600 hidden">${item.details}</p>
+                        </div>
+                    </div>
+                `).join('');
+                 timelineContainer.querySelector('p').classList.remove('hidden');
+            }
+            
+            function renderTabs() {
+                tabsContainer.innerHTML = Object.keys(appData.challenges).map(key => `
+                    <button data-tab="${key}" class="px-4 py-2 text-sm sm:text-base font-semibold rounded-full transition-all duration-300 ${key === activeTab ? 'tab-active' : 'tab-inactive'}">
+                        ${appData.challenges[key].title}
+                    </button>
+                `).join('');
+            }
+            
+            function renderTabContent() {
+                const contentData = appData.challenges[activeTab];
+                let html = `<div class="p-2 sm:p-4 animate-fade-in">
+                                <p class="text-slate-600 mb-8 max-w-3xl mx-auto text-center">${contentData.intro}</p>`;
+                
+                if (activeTab === 'dsa') {
+                    html += `
+                        <div class="chart-container mb-12">
+                            <canvas id="dsaPriorityChart"></canvas>
+                        </div>
+                        <div id="dsa-filters" class="flex flex-wrap justify-center gap-2 mb-6"></div>
+                        <div id="dsa-questions" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>`;
+                } else if (activeTab === 'systemDesign') {
+                     html += `
+                        <div id="sys-design-filters" class="flex flex-wrap justify-center gap-2 mb-6"></div>
+                        <div id="sys-design-questions" class="grid md:grid-cols-2 gap-4"></div>`;
+                } else if (activeTab === 'iam') {
+                    html += `
+                        <div id="iam-filters" class="flex flex-wrap justify-center gap-2 mb-6"></div>
+                        <div id="iam-questions" class="grid md:grid-cols-2 gap-4"></div>`;
+                } else if (activeTab === 'oa') {
+                    html += `<div class="grid md:grid-cols-2 gap-4">
+                        ${contentData.questions.map(q => `
+                            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h5 class="font-bold text-slate-800">${q.title}</h5>
+                                <p class="text-sm text-slate-500 mt-1">${q.concepts}</p>
+                            </div>
+                        `).join('')}
+                    </div>`;
+                } else if (activeTab === 'behavioral') {
+                     html += `<div class="text-center">
+                        <div id="behavioral-card" class="bg-amber-50 border-2 border-amber-200 p-8 rounded-xl min-h-[150px] flex items-center justify-center transition-transform duration-300">
+                            <p id="current-behavioral-question" class="text-lg font-medium text-amber-800">Click "Generate New Question ✨" to start</p>
+                            <div id="behavioral-hint-area" class="hidden mt-4 text-left">
+                                <p class="font-semibold text-amber-700">STAR Method Hint:</p>
+                                <div id="behavioral-hint-content" class="llm-output"></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-center gap-4 mt-6">
+                            <button id="generate-behavioral-btn" class="px-4 py-2 bg-teal-600 text-white font-semibold rounded-lg shadow hover:bg-teal-700 transition">
+                                Generate New Question ✨
+                            </button>
+                            <button id="get-star-hint-btn" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition">
+                                Get STAR Hint ✨
+                            </button>
+                        </div>
+                     </div>`;
+                }
+                
+                html += `</div>`;
+                tabContentContainer.innerHTML = html;
+
+                if (activeTab === 'dsa') {
+                    renderDsaChart();
+                    renderDsaFilters();
+                    renderDsaQuestions();
+                } else if (activeTab === 'systemDesign') {
+                    renderSysDesignFilters();
+                    renderSysDesignQuestions();
+                } else if (activeTab === 'iam') {
+                    renderIamFilters();
+                    renderIamQuestions();
+                } else if (activeTab === 'behavioral') {
+                    setupBehavioralListeners();
+                }
+            }
+
+            function renderDsaChart() {
+                const ctx = document.getElementById('dsaPriorityChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'polarArea',
+                    data: {
+                        labels: appData.challenges.dsa.priorityData.labels,
+                        datasets: [{
+                            label: 'Topic Priority',
+                            data: appData.challenges.dsa.priorityData.data,
+                            backgroundColor: [
+                                'rgba(13, 148, 136, 0.7)',
+                                'rgba(15, 118, 110, 0.7)',
+                                'rgba(17, 94, 89, 0.7)',
+                                'rgba(20, 184, 166, 0.7)',
+                                'rgba(45, 212, 191, 0.7)',
+                                'rgba(107, 114, 128, 0.7)',
+                                'rgba(75, 85, 99, 0.7)'
+                            ],
+                            borderWidth: 1,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                ticks: { display: false },
+                                grid: { circular: true }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: { size: 12 }
+                                }
+                            },
+                        }
+                    }
+                });
+            }
+
+            function renderDsaFilters() {
+                const filters = ['All', ...new Set(appData.challenges.dsa.questions.map(q => q.category))];
+                document.getElementById('dsa-filters').innerHTML = filters.map(f => `
+                    <button data-filter="${f}" class="dsa-filter-btn px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-200 ${f === activeDsaFilter ? 'filter-btn-active' : 'filter-btn-inactive'}">
+                        ${f}
+                    </button>
+                `).join('');
+            }
+
+            function renderDsaQuestions() {
+                const container = document.getElementById('dsa-questions');
+                const filteredQuestions = activeDsaFilter === 'All'
+                    ? appData.challenges.dsa.questions
+                    : appData.challenges.dsa.questions.filter(q => q.category === activeDsaFilter);
+
+                container.innerHTML = filteredQuestions.map((q, index) => `
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200" data-question-index="${index}">
+                        <div class="flex justify-between items-start">
+                             <h5 class="font-bold text-slate-800 pr-2">${q.title}</h5>
+                             <span class="text-xs font-semibold bg-teal-100 text-teal-800 px-2 py-1 rounded-full whitespace-nowrap">${q.category}</span>
+                        </div>
+                        <p class="text-sm text-slate-500 mt-2">Complexity: ${q.complexity}</p>
+                        ${q.links ? `<div class="mt-3 flex flex-wrap gap-2">
+                            ${Object.entries(q.links).map(([platform, url]) => `
+                                <a href="${url}" target="_blank" class="px-2 py-1 text-xs font-medium rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 transition">
+                                    ${platform.replace(/_/g, ' ').toUpperCase()}
+                                </a>
+                            `).join('')}
+                        </div>` : ''}
+                        <button class="get-dsa-hint-btn mt-4 px-3 py-1.5 bg-purple-600 text-white text-sm font-semibold rounded-lg shadow hover:bg-purple-700 transition">
+                            Get Hint ✨
+                        </button>
+                        <div class="dsa-hint-output hidden llm-output"></div>
+                    </div>
+                `).join('');
+            }
+            
+            function renderSysDesignFilters() {
+                const filters = ['All', ...new Set(appData.challenges.systemDesign.questions.map(q => q.category))];
+                document.getElementById('sys-design-filters').innerHTML = filters.map(f => `
+                    <button data-filter="${f}" class="sys-design-filter-btn px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-200 ${f === activeSysDesignFilter ? 'filter-btn-active' : 'filter-btn-inactive'}">
+                        ${f}
+                    </button>
+                `).join('');
+            }
+
+            function renderSysDesignQuestions() {
+                 const container = document.getElementById('sys-design-questions');
+                 const filteredQuestions = activeSysDesignFilter === 'All'
+                    ? appData.challenges.systemDesign.questions
+                    : appData.challenges.systemDesign.questions.filter(q => q.category === activeSysDesignFilter);
+                
+                 container.innerHTML = filteredQuestions.map(q => `
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <div class="flex justify-between items-start">
+                             <h5 class="font-bold text-slate-800 pr-2">${q.title}</h5>
+                             <span class="text-xs font-semibold ${q.category === 'Okta-Specific' ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-800'} px-2 py-1 rounded-full whitespace-nowrap">${q.category}</span>
+                        </div>
+                        <p class="text-sm text-slate-500 mt-2">${q.concepts}</p>
+                    </div>
+                 `).join('');
+            }
+            
+            function renderIamFilters() {
+                const filters = ['All', ...new Set(appData.challenges.iam.questions.map(q => q.category))];
+                document.getElementById('iam-filters').innerHTML = filters.map(f => `
+                    <button data-filter="${f}" class="iam-filter-btn px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-200 ${f === activeIamFilter ? 'filter-btn-active' : 'filter-btn-inactive'}">
+                        ${f}
+                    </button>
+                `).join('');
+            }
+            
+            function renderIamQuestions() {
+                 const container = document.getElementById('iam-questions');
+                 const filteredQuestions = activeIamFilter === 'All'
+                    ? appData.challenges.iam.questions
+                    : appData.challenges.iam.questions.filter(q => q.category === activeIamFilter);
+                
+                 container.innerHTML = filteredQuestions.map((q, index) => `
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200" data-question-index="${index}">
+                        <div class="flex justify-between items-start">
+                             <h5 class="font-bold text-slate-800 pr-2">${q.title}</h5>
+                             <span class="text-xs font-semibold bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full whitespace-nowrap">${q.category}</span>
+                        </div>
+                        <p class="text-sm text-slate-500 mt-2">${q.concepts}</p>
+                        ${q.links ? `<div class="mt-3 flex flex-wrap gap-2">
+                            ${Object.entries(q.links).map(([source, url]) => `
+                                <a href="${url}" target="_blank" class="px-2 py-1 text-xs font-medium rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 transition">
+                                    ${source.replace(/_/g, ' ').toUpperCase()}
+                                </a>
+                            `).join('')}
+                        </div>` : ''}
+                        <button class="get-iam-deep-dive-btn mt-4 px-3 py-1.5 bg-green-600 text-white text-sm font-semibold rounded-lg shadow hover:bg-green-700 transition">
+                            Deep Dive ✨
+                        </button>
+                        <div class="iam-deep-dive-output hidden llm-output"></div>
+                    </div>
+                 `).join('');
+            }
+
+
+            function renderRecommendations() {
+                recommendationsList.innerHTML = appData.recommendations.map(item => `
+                    <li class="flex items-start">
+                        <span class="text-teal-500 text-2xl mr-3 mt-1">&#10003;</span>
+                        <div>
+                            <h4 class="font-semibold text-slate-800">${item.title}</h4>
+                            <p class="text-slate-600">${item.details}</p>
+                        </div>
+                    </li>
+                `).join('');
+            }
+
+            // Event Listeners for Tabs
+            tabsContainer.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    activeTab = e.target.dataset.tab;
+                    renderTabs();
+                    renderTabContent();
+                }
+            });
+
+            // Event Listeners for Filters and LLM Buttons within Tab Content
+            tabContentContainer.addEventListener('click', async (e) => {
+                // DSA Filters
+                if (e.target.classList.contains('dsa-filter-btn')) {
+                    activeDsaFilter = e.target.dataset.filter;
+                    renderDsaFilters();
+                    renderDsaQuestions();
+                }
+                // System Design Filters
+                if (e.target.classList.contains('sys-design-filter-btn')) {
+                    activeSysDesignFilter = e.target.dataset.filter;
+                    renderSysDesignFilters();
+                    renderSysDesignQuestions();
+                }
+                // IAM Filters
+                if (e.target.classList.contains('iam-filter-btn')) {
+                    activeIamFilter = e.target.dataset.filter;
+                    renderIamFilters();
+                    renderIamQuestions();
+                }
+
+                // DSA Hint Button
+                if (e.target.classList.contains('get-dsa-hint-btn')) {
+                    const card = e.target.closest('[data-question-index]');
+                    const questionIndex = card.dataset.questionIndex;
+                    const questionTitle = appData.challenges.dsa.questions[questionIndex].title;
+                    const hintOutputDiv = card.querySelector('.dsa-hint-output');
+
+                    hintOutputDiv.classList.remove('hidden');
+                    hintOutputDiv.innerHTML = '<p class="text-slate-500">Generating hint...</p>';
+
+                    const prompt = `Provide a high-level approach or a hint for solving the Data Structures and Algorithms problem: '${questionTitle}'. Do not provide the full solution, just guide the thought process. Keep it concise.`;
+                    const hint = await callGemini(prompt);
+                    hintOutputDiv.innerHTML = hint;
+                }
+
+                // IAM Deep Dive Button
+                if (e.target.classList.contains('get-iam-deep-dive-btn')) {
+                    const card = e.target.closest('[data-question-index]');
+                    const questionIndex = card.dataset.questionIndex;
+                    const questionTitle = appData.challenges.iam.questions[questionIndex].title;
+                    const deepDiveOutputDiv = card.querySelector('.iam-deep-dive-output');
+
+                    deepDiveOutputDiv.classList.remove('hidden');
+                    deepDiveOutputDiv.innerHTML = '<p class="text-slate-500">Generating deep dive...</p>';
+
+                    const prompt = `Explain the concept of '${questionTitle}' in the context of Identity and Access Management (IAM) for a software engineer. Provide key aspects and a brief real-world application relevant to Okta if possible. Keep the explanation concise and to the point.`;
+                    const deepDive = await callGemini(prompt);
+                    deepDiveOutputDiv.innerHTML = deepDive;
+                }
+            });
+
+            function setupBehavioralListeners() {
+                const generateBtn = document.getElementById('generate-behavioral-btn');
+                const getHintBtn = document.getElementById('get-star-hint-btn');
+                const currentQuestionDisplay = document.getElementById('current-behavioral-question');
+                const hintArea = document.getElementById('behavioral-hint-area');
+                const hintContent = document.getElementById('behavioral-hint-content');
+
+                let currentQuestion = "";
+
+                generateBtn.addEventListener('click', async () => {
+                    currentQuestionDisplay.innerHTML = '<p class="text-slate-500">Generating new question...</p>';
+                    hintArea.classList.add('hidden');
+                    hintContent.innerHTML = '';
+
+                    const existingQuestions = appData.challenges.behavioral.questions.join('; ');
+                    const prompt = `Generate a unique behavioral interview question for a new grad software engineer role at a company like Okta. The question should be different from: ${existingQuestions}. Provide only the question.`;
+                    
+                    currentQuestion = await callGemini(prompt);
+                    currentQuestionDisplay.innerHTML = `<p class="text-lg font-medium text-amber-800">${currentQuestion}</p>`;
+                });
+
+                getHintBtn.addEventListener('click', async () => {
+                    if (!currentQuestion) {
+                        currentQuestionDisplay.innerHTML = '<p class="text-red-500">Please generate a question first!</p>';
+                        return;
+                    }
+                    hintArea.classList.remove('hidden');
+                    hintContent.innerHTML = '<p class="text-slate-500">Generating STAR hint...</p>';
+
+                    const prompt = `Provide a concise hint and suggest STAR method points (Situation, Task, Action, Result) for answering the behavioral interview question: '${currentQuestion}' for a new grad software engineer role. Focus on key aspects to include in each STAR section.`;
+                    const hint = await callGemini(prompt);
+                    hintContent.innerHTML = hint;
+                });
+            }
+
+
+            renderTimeline();
+            renderTabs();
+            renderTabContent();
+            renderRecommendations();
+        });
+    </script>
+</body>
+</html>
